@@ -1,5 +1,8 @@
 # -*- encoding: utf-8 -*-
 import os
+from paste.deploy import loadapp
+from waitress import serve
+
 import logging
 import sqlite3
 import md5
@@ -115,6 +118,6 @@ if __name__ == '__main__':
     # scan for @view_config and @subscriber decorators
     config.scan()
     # serve app
-    app = config.make_wsgi_app()
-    server = make_server('0.0.0.0', 8080, app)
-    server.serve_forever()
+    port = int(os.environ.get("PORT", 5000))
+    app = loadapp('config:production.ini', relative_to='.')
+    serve(app, host='0.0.0.0', port=port)
