@@ -123,7 +123,7 @@ def add_room(request, room):
     request.db.commit()
 
 def get_rooms(request):
-    rs = request.db.execute("select id, name from room")
+    rs = request.db.execute("select id, name from room ORDER BY id DESC")
     return [dict(room_id=row[0], name=row[1]) for row in rs.fetchall()]
 
 def room_exists(request, room_id):

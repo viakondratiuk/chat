@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 <%inherit file="layout.mako"/>
-<h1>Available Rooms</h1>
+<h1>Join Room</h1>
+<div style="width: 273px; height: 200px; overflow: auto; margin: 0 auto;">
 % if rooms:
-    <table class="info" align="center">
-        <tr>
-            <td>Name</td>
-        </tr>
     % for room in rooms:
-        <tr>
-            <td><a href="/join_room?id=${room['room_id']}">${room['name']}</a></td>
-        </tr>
+        <div><a href="/join_room?id=${room['room_id']}">${room['name']}</a></div>
     % endfor
-    </table>
 % else:
-  <p>There are no rooms. Create new one. Be the first.</p>
+  <div>There are no rooms. Create new one. Be the first.</div>
 % endif
+</div>
 
-<h1>Add Room</h1>
-<form action="${request.route_url('add_room')}" method="post">
-    <label form="room">Name:</label>
-    <input type="text" id="room" name="room" />
-
-    <input type="submit" value="Go" />
+<h1>Or Add New One</h1>
+<form class="inline" action="${request.route_url('add_room')}" method="post">
+    <div class="fieldcontainer">
+        <div class="label"><label form="room">Room</label></div>
+        <div class="field"><input type="text" id="room" name="room" /></div>
+        <div class="field"><input type="submit" value="Add" /></div>
+    </div>
 </form>
 

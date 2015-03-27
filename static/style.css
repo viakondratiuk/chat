@@ -4,6 +4,7 @@ body, html {
     margin: 0;
     padding: 0;
     display: table;
+    color: #454545;
 }
 
 a.toggle {
@@ -14,7 +15,7 @@ a.toggle {
 
 #page {
     width: 800px;
-    margin: 10px auto;
+    margin: 20px auto 0 auto;
 }
 
 h1 {
@@ -29,15 +30,20 @@ form {
     display: table;/* shrinks to fit content */
     margin: auto;
     text-align: center;
+    padding: 10px;
+}
+
+legend {
+    display: block;
+    border-bottom: 1px solid #454545;
 }
 
 input, label {
     display: block;
-    margin: 5px auto;
+    margin: 5px 3px;
 }
 
 input[type="text"], input[type="password"] {
-    padding: 0 2px;
     width: 133px;
 }
 
@@ -77,4 +83,17 @@ table.info td {
 
 .center {
     text-align: center;
+}
+
+.fieldcontainer {
+    clear: both;
+}
+
+.label {
+    float: left;
+    text-align: right;
+}
+
+.field {
+    float: left;
 }
