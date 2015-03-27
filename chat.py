@@ -1,21 +1,18 @@
 # -*- encoding: utf-8 -*-
 import os
-from paste.deploy import loadapp
-from waitress import serve
+from wsgiref.simple_server import make_server
+from pyramid.config import Configurator
 
 import logging
 import sqlite3
 import md5
 
-from pyramid.config import Configurator
 from pyramid.events import NewRequest
 from pyramid.events import subscriber
 from pyramid.events import ApplicationCreated
 from pyramid.httpexceptions import HTTPFound
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.view import view_config
-
-from wsgiref.simple_server import make_server
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
@@ -118,6 +115,7 @@ if __name__ == '__main__':
     # scan for @view_config and @subscriber decorators
     config.scan()
     # serve app
-    port = int(os.environ.get("PORT", 5000))
-    app = loadapp('config:production.ini', relative_to='.')
-    serve(app, host='0.0.0.0', port=port)
+    app = config.make_wsgi_app()
+    port = int(os.environ.get('PORT', '5000'))
+    server = make_server('0.0.0.0', port, app)
+    server.serve_forever()
