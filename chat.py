@@ -28,7 +28,7 @@ def login_view(request):
         if not user_exists(request, name, password):
             request.session.flash('User not found!')
             return HTTPFound(location=request.route_url('login'))
-        return HTTPFound(location=request.route_url('rooms'))
+        return HTTPFound(location=request.route_url('room_list'))
     return {}
 
 # Registration page
@@ -54,8 +54,8 @@ def register_view(request):
     return {}
 
 # Show all available chat rooms
-@view_config(route_name='rooms', renderer='rooms.mako')
-def rooms_view(request):
+@view_config(route_name='room_list', renderer='room_list.mako')
+def room_list_view(request):
     return {'rooms': get_rooms(request)}
 
 # Create new room
@@ -65,27 +65,32 @@ def add_room_view(request):
         room = request.POST.get('room')
         add_room(request, room)
 
-        return HTTPFound(location=request.route_url('rooms'))
+        return HTTPFound(location=request.route_url('room_list'))
     return {}
 
-# Create new room
-@view_config(route_name='join_room', renderer='join_room.mako')
-def join_room_view(request):
+# Join selected room
+@view_config(route_name='room', renderer='room.mako')
+def room_view(request):
     if request.method == 'GET' and request.GET.get('id'):
         room_id = int(request.GET.get('id'))
         if not room_exists(request, room_id):
             request.session.flash('Room with id %s doesn\'t exist.' % room_id)
-            return HTTPFound(location=request.route_url('rooms'))
-    return {'history': get_room_history(request, 1)}
+            return HTTPFound(location=request.route_url('room_list'))
+    return {'history': get_room_history(request, room_id)}
 
 # Add message
 @view_config(route_name='add_message', renderer='add_message.mako')
 def add_message_view(request):
-    if request.method == 'POST' and request.POST.get('message'):
+    if request.method == 'POST' and request.POST.get('message') and request.POST.get('id'):
         message = request.POST.get('message')
-        add_message(request, message)
-        return HTTPFound(location=request.route_url('join_room'))
+        room_id = request.POST.get('id')
+        add_message(request, room_id, message)
+        return HTTPFound(location=request.route_url('room', _query={'id': room_id}))
     return {}
+
+@view_config(route_name='refresh', renderer='json')
+def refresh_view(request):
+    return {'test': 'test'}
 
 # subscribers
 @subscriber(NewRequest)
@@ -130,11 +135,11 @@ def room_exists(request, room_id):
     return request.db.execute("select * from room where id = ?", (room_id, )).fetchone()
 
 def get_room_history(request, room_id):
-    rs = request.db.execute("select user.name, message.message from message inner join user on message.user_id = user.id where message.room_id = ? limit 10", (room_id, ))
+    rs = request.db.execute("select user.name, message.message from message inner join user on message.user_id = user.id where message.room_id = ?", (room_id, ))
     return [dict(name=row[0], message=row[1]) for row in rs.fetchall()]
 
-def add_message(request, message):
-    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (1, 1, message))
+def add_message(request, room_id, message):
+    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (1, room_id, message))
     request.db.commit()
 
 if __name__ == '__main__':
@@ -153,9 +158,10 @@ if __name__ == '__main__':
     # routes setup
     config.add_route('login', '/')
     config.add_route('register', '/register')
-    config.add_route('rooms', '/rooms')
+    config.add_route('room_list', '/room_list')
     config.add_route('add_room', '/add_room')
-    config.add_route('join_room', '/join_room')
+    config.add_route('room', '/room')
+    config.add_route('refresh', '/refresh')
     config.add_route('add_message', '/add_message')
     config.add_route('error', '/error')
     # static view setup

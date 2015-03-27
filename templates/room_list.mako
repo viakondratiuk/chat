@@ -4,7 +4,7 @@
 <div style="width: 273px; height: 200px; overflow: auto; margin: 0 auto;">
 % if rooms:
     % for room in rooms:
-        <div><a href="/join_room?id=${room['room_id']}">${room['name']}</a></div>
+        <div><a href="/room?id=${room['room_id']}">${room['name']}</a></div>
     % endfor
 % else:
   <div>There are no rooms. Create new one. Be the first.</div>
