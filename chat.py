@@ -28,7 +28,7 @@ def login_view(request):
         if not user_exists(request, name, password):
             request.session.flash('User not found!')
             return HTTPFound(location=request.route_url('login'))
-        return HTTPFound(location=request.route_url('chat_rooms'))
+        return HTTPFound(location=request.route_url('rooms'))
     return {}
 
 # Registration page
@@ -39,7 +39,7 @@ def register_view(request):
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
         if name_exists(request, name):
-            request.session.flash('Specified name: %s already exists' % name)
+            request.session.flash('Specified name: %s already exists.' % name)
             return HTTPFound(location=request.route_url('register'))
         if password1 != password2:
             request.session.flash('Password mismatch! Please check your password.')
@@ -54,8 +54,37 @@ def register_view(request):
     return {}
 
 # Show all available chat rooms
-@view_config(route_name='chat_rooms', renderer='chat_rooms.mako')
-def chat_rooms_view(request):
+@view_config(route_name='rooms', renderer='rooms.mako')
+def rooms_view(request):
+    return {'rooms': get_rooms(request)}
+
+# Create new room
+@view_config(route_name='add_room', renderer='add_room.mako')
+def add_room_view(request):
+    if request.method == 'POST' and request.POST.get('room'):
+        room = request.POST.get('room')
+        add_room(request, room)
+
+        return HTTPFound(location=request.route_url('rooms'))
+    return {}
+
+# Create new room
+@view_config(route_name='join_room', renderer='join_room.mako')
+def join_room_view(request):
+    if request.method == 'GET' and request.GET.get('id'):
+        room_id = int(request.GET.get('id'))
+        if not room_exists(request, room_id):
+            request.session.flash('Room with id %s doesn\'t exist.' % room_id)
+            return HTTPFound(location=request.route_url('rooms'))
+    return {'history': get_room_history(request, 1)}
+
+# Add message
+@view_config(route_name='add_message', renderer='add_message.mako')
+def add_message_view(request):
+    if request.method == 'POST' and request.POST.get('message'):
+        message = request.POST.get('message')
+        add_message(request, message)
+        return HTTPFound(location=request.route_url('join_room'))
     return {}
 
 # subscribers
@@ -80,15 +109,32 @@ def application_created_subscriber(event):
 
 #custom
 def user_exists(request, name, password):
-    return request.db.execute("select * from users where name = ? and password = ?", (name, password)).fetchone()
+    return request.db.execute("select * from user where name = ? and password = ?", (name, password)).fetchone()
 
 def name_exists(request, name):
-    return request.db.execute("select * from users where name = ?", (name,)).fetchone()
+    return request.db.execute("select * from user where name = ?", (name, )).fetchone()
 
 def add_user(request, name, password):
-    request.db.execute(
-        "insert into users (name, password) values (?, ?)", (name, password)
-    )
+    request.db.execute("insert into user (name, password) values (?, ?)", (name, password))
+    request.db.commit()
+
+def add_room(request, room):
+    request.db.execute("insert into room (name) values (?)", (room, ))
+    request.db.commit()
+
+def get_rooms(request):
+    rs = request.db.execute("select id, name from room")
+    return [dict(room_id=row[0], name=row[1]) for row in rs.fetchall()]
+
+def room_exists(request, room_id):
+    return request.db.execute("select * from room where id = ?", (room_id, )).fetchone()
+
+def get_room_history(request, room_id):
+    rs = request.db.execute("select user.name, message.message from message inner join user on message.user_id = user.id where message.room_id = ? limit 10", (room_id, ))
+    return [dict(name=row[0], message=row[1]) for row in rs.fetchall()]
+
+def add_message(request, message):
+    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (1, 1, message))
     request.db.commit()
 
 if __name__ == '__main__':
@@ -107,8 +153,10 @@ if __name__ == '__main__':
     # routes setup
     config.add_route('login', '/')
     config.add_route('register', '/register')
-    config.add_route('chat_rooms', '/chat-rooms')
-    config.add_route('message', '/message')
+    config.add_route('rooms', '/rooms')
+    config.add_route('add_room', '/add_room')
+    config.add_route('join_room', '/join_room')
+    config.add_route('add_message', '/add_message')
     config.add_route('error', '/error')
     # static view setup
     config.add_static_view('static', os.path.join(here, 'static'))
