@@ -1,18 +1,18 @@
 # -*- encoding: utf-8 -*-
 import os
-from wsgiref.simple_server import make_server
-from pyramid.config import Configurator
-
 import logging
 import sqlite3
 import md5
 
+from pyramid.config import Configurator
 from pyramid.events import NewRequest
 from pyramid.events import subscriber
 from pyramid.events import ApplicationCreated
 from pyramid.httpexceptions import HTTPFound
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.view import view_config
+
+from wsgiref.simple_server import make_server
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
