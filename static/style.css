@@ -1,0 +1,80 @@
+body, html {   
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: table;
+}
+
+a.toggle {
+    text-align: center;
+    text-decoration: none;
+    border-bottom: 1px dashed;
+}
+
+#page {
+    width: 800px;
+    margin: 10px auto;
+}
+
+h1 {
+    font-size: 18px;
+    padding: 5px 0;
+    text-align: center;
+    border-bottom: 1px solid #222;
+    color: #222;
+}
+
+form {
+    display: table;/* shrinks to fit content */
+    margin: auto;
+    text-align: center;
+}
+
+input, label {
+    display: block;
+    margin: 5px auto;
+}
+
+input[type="text"], input[type="password"] {
+    padding: 0 2px;
+    width: 133px;
+}
+
+input[readonly="readonly"] {
+    background-color: #E9E9E9;
+}
+
+p.error {
+    padding: 5px 0;
+    text-align: center;
+    border-bottom: 1px solid #D8000C;
+    color: #D8000C;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+li {
+    padding: 0 5px;
+    display: inline;
+}
+
+table.info {
+	border: 1px solid #666;
+	border-collapse: collapse;
+}
+
+table.info td {
+	border: 1px solid #666;
+	padding: 8px;
+	background-color: #FFF;
+}
+
+.center {
+    text-align: center;
+}
