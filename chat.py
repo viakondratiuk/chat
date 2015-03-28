@@ -98,6 +98,7 @@ def room_view(request):
             return HTTPFound(location=request.route_url('room_list'))
 
         request.session['room'] = room
+        request.session['room']['last_id'] = get_last_message_id(request)
     return {'room': room, 'history': get_room_history(request, room_id)}
 
 # Add message
@@ -151,7 +152,8 @@ def clear_session(request):
     request.session = dict()
 
 def get_user(request, name, password):
-    return request.db.execute("select * from user where name = ? and password = ?", (name, password)).fetchone()
+    rs = request.db.execute("select * from user where name = ? and password = ?", (name, password)).fetchone()
+    return dict(id=rs[0], name=rs[1])
 
 def name_exists(request, name):
     return request.db.execute("select * from user where name = ?", (name, )).fetchone()
@@ -179,15 +181,23 @@ def get_room_history(request, room_id):
     return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
 
 def add_message(request, room_id, message):
-    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (1, room_id, message))
+    user_id = request.session['user']['id']
+    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (user_id, room_id, message))
     request.db.commit()
 
 def get_message_list_since(request, time):
     room_id = request.session['room']['id']
+    last_id = request.session['room']['last_id']
     rs = request.db.execute(
-        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ? and datetime > ?", (room_id, time)
+        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ? and message.id > ?", (room_id, last_id)
     )
+    request.session['room']['last_id'] = get_last_message_id(request)
     return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
+
+def get_last_message_id(request):
+    room_id = request.session['room']['id']
+    rs = request.db.execute("select id from message where room_id = ? order by id desc limit 1;", (room_id, )).fetchone()
+    return rs[0]
 
 if __name__ == '__main__':
     # configuration settings

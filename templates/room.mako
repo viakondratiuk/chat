@@ -16,7 +16,7 @@
 <form class="inline" action="${request.route_url('add_message')}" method="post">
     <input type="hidden" name="id" value="${room['id']}"/>
     <div class="fieldcontainer">
-        <div class="field"><input type="text" id="message" name="message" /></div>
+        <div class="field"><input type="text" id="message" name="message" autocomplete="off"/></div>
         <div class="field"><input type="submit" value="Add" /></div>
     </div>
 </form>
