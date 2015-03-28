@@ -26,14 +26,21 @@ function toggleVisibility(id) {
 
 function ping() {
     $.ajax({
-        url: 'refresh',
+        url: 'refresh?time=' + $.now(),
         success: function(result) {
-            $("#chat").append("<div>" + result.test + "</div>");
-            document.getElementById('chat').scrollTop = 9999999;
+            if (result.message_list.length > 0) {
+                $.each(result.message_list, function(k, v) {
+                    $('#chat').append('<div><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>');
+                    document.getElementById('chat').scrollTop = 9999999;
+                });
+            }
         }
     });
 }
 
 $(document).ready(function() {
-    setInterval(ping, 1000);
+    if ($('#chat').length) {
+        document.getElementById('chat').scrollTop = 9999999;
+        setInterval(ping, 1000);
+    }
 })

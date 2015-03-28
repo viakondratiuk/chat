@@ -3,6 +3,7 @@ import os
 import logging
 import sqlite3
 import md5
+import datetime
 
 from pyramid.config import Configurator
 from pyramid.events import NewRequest
@@ -25,11 +26,20 @@ def login_view(request):
     if request.method == 'POST' and request.POST.get('name') and request.POST.get('password'):
         name = request.POST.get('name')
         password = md5.md5(request.POST.get('password')).hexdigest()
-        if not user_exists(request, name, password):
+        user = get_user(request, name, password)
+        if not user:
             request.session.flash('User not found!')
             return HTTPFound(location=request.route_url('login'))
+
+        request.session['user'] = user
         return HTTPFound(location=request.route_url('room_list'))
     return {}
+
+# Logout
+@view_config(route_name='logout')
+def logout_view(request):
+    clear_session(request)
+    return HTTPFound(location=request.route_url('login'))
 
 # Registration page
 @view_config(route_name='register', renderer='register.mako')
@@ -56,11 +66,17 @@ def register_view(request):
 # Show all available chat rooms
 @view_config(route_name='room_list', renderer='room_list.mako')
 def room_list_view(request):
-    return {'rooms': get_rooms(request)}
+    if 'user' not in request.session:
+        return HTTPFound(location=request.route_url('login'))
+
+    return {'rooms': get_room_list(request)}
 
 # Create new room
 @view_config(route_name='add_room', renderer='add_room.mako')
 def add_room_view(request):
+    if 'user' not in request.session:
+        return HTTPFound(location=request.route_url('login'))
+
     if request.method == 'POST' and request.POST.get('room'):
         room = request.POST.get('room')
         add_room(request, room)
@@ -71,26 +87,44 @@ def add_room_view(request):
 # Join selected room
 @view_config(route_name='room', renderer='room.mako')
 def room_view(request):
+    if 'user' not in request.session:
+        return HTTPFound(location=request.route_url('login'))
+
     if request.method == 'GET' and request.GET.get('id'):
         room_id = int(request.GET.get('id'))
-        if not room_exists(request, room_id):
+        room = get_room(request, room_id)
+        if not room:
             request.session.flash('Room with id %s doesn\'t exist.' % room_id)
             return HTTPFound(location=request.route_url('room_list'))
-    return {'history': get_room_history(request, room_id)}
+
+        request.session['room'] = room
+    return {'room': room, 'history': get_room_history(request, room_id)}
 
 # Add message
 @view_config(route_name='add_message', renderer='add_message.mako')
 def add_message_view(request):
+    if 'user' not in request.session:
+        return HTTPFound(location=request.route_url('login'))
+
     if request.method == 'POST' and request.POST.get('message') and request.POST.get('id'):
         message = request.POST.get('message')
         room_id = request.POST.get('id')
         add_message(request, room_id, message)
         return HTTPFound(location=request.route_url('room', _query={'id': room_id}))
+
     return {}
 
 @view_config(route_name='refresh', renderer='json')
 def refresh_view(request):
-    return {'test': 'test'}
+    if 'user' not in request.session:
+        return {}
+
+    if request.method == 'GET' and request.GET.get('time'):
+        time = request.GET.get('time')
+        time = datetime.datetime.fromtimestamp(int(time)/1000).strftime('%Y-%m-%d %H:%M:%S')
+        message_list = get_message_list_since(request, time)
+
+    return {'message_list': message_list}
 
 # subscribers
 @subscriber(NewRequest)
@@ -113,7 +147,10 @@ def application_created_subscriber(event):
         db.commit()
 
 #custom
-def user_exists(request, name, password):
+def clear_session(request):
+    request.session = dict()
+
+def get_user(request, name, password):
     return request.db.execute("select * from user where name = ? and password = ?", (name, password)).fetchone()
 
 def name_exists(request, name):
@@ -127,20 +164,30 @@ def add_room(request, room):
     request.db.execute("insert into room (name) values (?)", (room, ))
     request.db.commit()
 
-def get_rooms(request):
-    rs = request.db.execute("select id, name from room ORDER BY id DESC")
+def get_room_list(request):
+    rs = request.db.execute("select id, name from room order by id desc")
     return [dict(room_id=row[0], name=row[1]) for row in rs.fetchall()]
 
-def room_exists(request, room_id):
-    return request.db.execute("select * from room where id = ?", (room_id, )).fetchone()
+def get_room(request, room_id):
+    rs = request.db.execute("select * from room where id = ?", (room_id, )).fetchone()
+    return dict(id=rs[0], name=rs[1])
 
 def get_room_history(request, room_id):
-    rs = request.db.execute("select user.name, message.message from message inner join user on message.user_id = user.id where message.room_id = ?", (room_id, ))
-    return [dict(name=row[0], message=row[1]) for row in rs.fetchall()]
+    rs = request.db.execute(
+        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ?", (room_id, )
+    )
+    return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
 
 def add_message(request, room_id, message):
     request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (1, room_id, message))
     request.db.commit()
+
+def get_message_list_since(request, time):
+    room_id = request.session['room']['id']
+    rs = request.db.execute(
+        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ? and datetime > ?", (room_id, time)
+    )
+    return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
 
 if __name__ == '__main__':
     # configuration settings
@@ -157,6 +204,7 @@ if __name__ == '__main__':
     config.include('pyramid_mako')
     # routes setup
     config.add_route('login', '/')
+    config.add_route('logout', '/logout')
     config.add_route('register', '/register')
     config.add_route('room_list', '/room_list')
     config.add_route('add_room', '/add_room')
