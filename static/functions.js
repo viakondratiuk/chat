@@ -39,17 +39,21 @@ function ping() {
 }
 
 function addMessage() {
-    form = $("#add_message")
-    console.log(form.attr("action"))
-    console.log(form.serialize())
+    $('#message').val('');
+    form = $('#add_message')
     $.ajax({
-        type: "POST",
-        url: form.attr("action"),
+        type: 'POST',
+        url: form.attr('action'),
         data: form.serialize()
     });
 }
 
 $(document).ready(function() {
+    if ($.browser.webkit) {
+        console.log('webkit')
+        $('#message').attr('autocomplete', 'off');
+    }
+
     if ($('#chat').length) {
         document.getElementById('chat').scrollTop = 9999999;
         setInterval(ping, 1000);

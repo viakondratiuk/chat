@@ -125,7 +125,6 @@ def add_message_view(request):
         message = request.POST.get('message')
         room_id = request.POST.get('id')
         add_message(request, room_id, message)
-        return HTTPFound(location=request.route_url('room', _query={'id': room_id}))
 
     return {}
 

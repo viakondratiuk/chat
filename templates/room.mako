@@ -18,7 +18,7 @@
     <input type="hidden" name="id" value="${room['id']}"/>
     <div class="fieldcontainer">
         <div class="label"><label form="message"><b>${request.session['user']['name']}</b></label></div>
-        <div class="field"><input type="text" id="message" name="message" autofocus autocomplete="off"/></div>
+        <div class="field"><input type="text" id="message" name="message" value="" autofocus /></div>
         <div class="field"><input type="button" value="Add" onclick="addMessage()"/></div>
     </div>
 </form>
