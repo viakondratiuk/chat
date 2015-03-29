@@ -14,5 +14,6 @@ create table if not exists message (
     user_id integer not null,
     room_id integer not null,
     datetime datetime default (datetime('now', 'localtime')),
-    message text not null
+    message text not null,
+    FOREIGN KEY(room_id) REFERENCES room(id) ON DELETE CASCADE
 );

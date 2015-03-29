@@ -101,6 +101,13 @@ table.info td {
     float: left;
 }
 
+#join {
+    width: 273px;
+    height: 200px;
+    overflow: auto;
+    margin: 0 auto;
+}
+
 #chat {
     width: 800px;
     height: 250px;
@@ -110,4 +117,14 @@ table.info td {
 
 #message {
     width: 600px;
+}
+
+.alighleft {
+    margin: 0;
+    float: left;
+}
+
+.alighright {
+    margin: 0;
+    float: right;
 }

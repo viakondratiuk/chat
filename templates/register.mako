@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 <%inherit file="layout.mako"/>
 <h1>Register</h1>
-<form class="standard" action="${request.route_url('register')}" onsubmit="return comparePasswords('password1', 'password2');" method="post">
+<form class="standard" action="${request.route_url('register')}" onsubmit="return checkPassword('password1', 'password2');" method="post">
     <div class="fieldcontainer">
         <div class="label"><label form="name">Name</label></div>
         <div class="field"><input type="text" id="name" name="name" /></div>

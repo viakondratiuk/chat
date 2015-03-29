@@ -18,7 +18,9 @@ logging.basicConfig()
 log = logging.getLogger(__file__)
 
 here = os.path.dirname(os.path.abspath(__file__))
-
+'''
+Registration
+'''
 # Start page where we can login
 @view_config(route_name='login', renderer='login.mako')
 def login_view(request):
@@ -62,6 +64,9 @@ def register_view(request):
         return HTTPFound(location=request.route_url('login'))
     return {}
 
+'''
+Rooms
+'''
 # Show all available chat rooms
 @view_config(route_name='room_list', renderer='room_list.mako')
 def room_list_view(request):
@@ -83,21 +88,31 @@ def add_room_view(request):
         return HTTPFound(location=request.route_url('room_list'))
     return {}
 
+# Create new room
+@view_config(route_name='delete_room')
+def delete_room_view(request):
+    if 'user' not in request.session:
+        return HTTPFound(location=request.route_url('login'))
+
+    room_id = int(request.matchdict['id'])
+    request.db.execute("delete from room where id = ?", (room_id, ))
+    request.db.commit()
+    return HTTPFound(location=request.route_url('room_list'))
+
 # Join selected room
 @view_config(route_name='room', renderer='room.mako')
 def room_view(request):
     if 'user' not in request.session:
         return HTTPFound(location=request.route_url('login'))
 
-    if request.method == 'GET' and request.GET.get('id'):
-        room_id = int(request.GET.get('id'))
-        room = get_room(request, room_id)
-        if not room:
-            request.session.flash('Room with id %s doesn\'t exist.' % room_id)
-            return HTTPFound(location=request.route_url('room_list'))
+    room_id = int(request.matchdict['id'])
+    room = get_room(request, room_id)
+    if not room:
+        request.session.flash('Room with id %s doesn\'t exist.' % room_id)
+        return HTTPFound(location=request.route_url('room_list'))
 
-        request.session['room'] = room
-        request.session['room']['last_id'] = get_last_message_id(request)
+    request.session['room'] = room
+    request.session['room']['last_id'] = get_last_message_id(request)
     return {'room': room, 'history': get_room_history(request, room_id)}
 
 # Add message
@@ -217,7 +232,8 @@ if __name__ == '__main__':
     config.add_route('register', '/register')
     config.add_route('room_list', '/room_list')
     config.add_route('add_room', '/add_room')
-    config.add_route('room', '/room')
+    config.add_route('delete_room', '/delete_room/{id}')
+    config.add_route('room', '/room/{id}')
     config.add_route('refresh', '/refresh')
     config.add_route('add_message', '/add_message')
     config.add_route('error', '/error')

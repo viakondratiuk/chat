@@ -14,12 +14,12 @@
 % endif
 </div>
 
-<form class="inline" action="${request.route_url('add_message')}" method="post">
+<form id="add_message" class="inline" action="${request.route_url('add_message')}" method="post">
     <input type="hidden" name="id" value="${room['id']}"/>
     <div class="fieldcontainer">
         <div class="label"><label form="message"><b>${request.session['user']['name']}</b></label></div>
         <div class="field"><input type="text" id="message" name="message" autofocus autocomplete="off"/></div>
-        <div class="field"><input type="submit" value="Add" /></div>
+        <div class="field"><input type="button" value="Add" onclick="addMessage()"/></div>
     </div>
 </form>
 

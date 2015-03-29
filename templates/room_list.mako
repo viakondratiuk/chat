@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 <%inherit file="layout.mako"/>
 <h1>Join Room</h1>
-<div style="width: 273px; height: 200px; overflow: auto; margin: 0 auto;">
+<div id="join">
 % if rooms:
     % for room in rooms:
-        <div><a href="/room?id=${room['room_id']}">${room['name']}</a></div>
+        <div class="fieldcontainer">
+            <p class="alighleft"><a href="/room/${room['room_id']}">${room['name']}</a></p>
+            <p class="alighright"><a href="/delete_room/${room['room_id']}">x</a></p>
+        </div>
     % endfor
 % else:
   <div>There are no rooms. Create new one. Be the first.</div>

@@ -1,4 +1,4 @@
-function comparePasswords(id1, id2) {
+function checkPassword(id1, id2) {
     var pass1 = document.getElementById(id1);
     var pass2 = document.getElementById(id2);
 
@@ -35,6 +35,17 @@ function ping() {
                 });
             }
         }
+    });
+}
+
+function addMessage() {
+    form = $("#add_message")
+    console.log(form.attr("action"))
+    console.log(form.serialize())
+    $.ajax({
+        type: "POST",
+        url: form.attr("action"),
+        data: form.serialize()
     });
 }
 
