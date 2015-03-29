@@ -26,7 +26,7 @@ function toggleVisibility(id) {
 
 function ping() {
     $.ajax({
-        url: 'refresh?time=' + $.now(),
+        url: 'refresh',
         success: function(result) {
             if (result.message_list.length > 0) {
                 $.each(result.message_list, function(k, v) {

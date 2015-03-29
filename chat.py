@@ -3,7 +3,6 @@ import os
 import logging
 import sqlite3
 import md5
-import datetime
 
 from pyramid.config import Configurator
 from pyramid.events import NewRequest
@@ -119,11 +118,7 @@ def add_message_view(request):
 def refresh_view(request):
     if 'user' not in request.session:
         return {}
-
-    if request.method == 'GET' and request.GET.get('time'):
-        time = request.GET.get('time')
-        time = datetime.datetime.fromtimestamp(int(time)/1000).strftime('%Y-%m-%d %H:%M:%S')
-        message_list = get_message_list_since(request, time)
+    message_list = get_new_message_list(request)
 
     return {'message_list': message_list}
 
@@ -182,10 +177,12 @@ def get_room_history(request, room_id):
 
 def add_message(request, room_id, message):
     user_id = request.session['user']['id']
-    request.db.execute("insert into message (user_id, room_id, message) values (?, ?, ?)", (user_id, room_id, message))
+    request.db.execute(
+        "insert into message (user_id, room_id, message) values (?, ?, ?)", (user_id, room_id, message)
+    )
     request.db.commit()
 
-def get_message_list_since(request, time):
+def get_new_message_list(request):
     room_id = request.session['room']['id']
     last_id = request.session['room']['last_id']
     rs = request.db.execute(
@@ -196,8 +193,10 @@ def get_message_list_since(request, time):
 
 def get_last_message_id(request):
     room_id = request.session['room']['id']
-    rs = request.db.execute("select id from message where room_id = ? order by id desc limit 1;", (room_id, )).fetchone()
-    return rs[0]
+    rs = request.db.execute(
+        "select id from message where room_id = ? order by id desc limit 1;", (room_id, )
+    ).fetchone()
+    return rs[0] if rs is not None else None
 
 if __name__ == '__main__':
     # configuration settings

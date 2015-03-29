@@ -89,7 +89,7 @@ table.info td {
 }
 
 .standard label {
-    width: 100px;
+    width: 80px;
 }
 
 .label {
@@ -102,12 +102,12 @@ table.info td {
 }
 
 #chat {
-    width: 500px;
+    width: 800px;
     height: 250px;
     overflow: auto;
     margin: 0 auto;
 }
 
 #message {
-    width: 455px;
+    width: 600px;
 }
