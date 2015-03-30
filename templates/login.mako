@@ -2,12 +2,12 @@
 <%inherit file="layout.mako"/>
 <h1>Login</h1>
 <form class="standard" action="${request.route_url('login')}" method="post">
-    <div class="fieldcontainer">
+    <div class="field_container">
         <div class="label"><label form="name">Name</label></div>
         <div class="field"><input type="text" id="name" name="name" /></div>
     </div>
 
-    <div class="fieldcontainer">
+    <div class="field_container">
         <div class="label"><label form="password">Password</label></div>
         <div class="field"><input type="password" id="password" name="password" /></div>
     </div>

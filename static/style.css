@@ -84,7 +84,7 @@ table.info td {
     text-align: center;
 }
 
-.fieldcontainer {
+.field_container {
     clear: both;
 }
 
@@ -110,7 +110,7 @@ table.info td {
 
 #chat {
     width: 800px;
-    height: 250px;
+    height: 350px;
     overflow: auto;
     margin: 0 auto;
 }

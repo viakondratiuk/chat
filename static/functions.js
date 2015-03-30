@@ -26,7 +26,7 @@ function toggleVisibility(id) {
 
 function ping() {
     $.ajax({
-        url: 'refresh',
+        url: '/refresh',
         success: function(result) {
             if (result.message_list.length > 0) {
                 $.each(result.message_list, function(k, v) {
@@ -38,24 +38,20 @@ function ping() {
     });
 }
 
-function addMessage() {
-    $('#message').val('');
-    form = $('#add_message')
-    $.ajax({
-        type: 'POST',
-        url: form.attr('action'),
-        data: form.serialize()
-    });
-}
-
 $(document).ready(function() {
-    if ($.browser.webkit) {
-        console.log('webkit')
-        $('#message').attr('autocomplete', 'off');
-    }
-
     if ($('#chat').length) {
         document.getElementById('chat').scrollTop = 9999999;
         setInterval(ping, 1000);
     }
+
+    $('#add_message').submit(function(e) {
+        form = $(this);
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize()
+        });
+        $('#message').val('')
+    });
 })
