@@ -160,10 +160,18 @@ def get_room(request, room_id):
 
 
 def get_room_history(request, room_id):
-    rs = request.db.execute(
-        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ?", (room_id, )
+    q = (
+        "select * "
+        "from "
+        "(select message.id, user.name, message.message, message.datetime "
+        "from message "
+        "inner join user on message.user_id = user.id "
+        "where message.room_id = ? order by message.id desc limit 10) "
+        "as t "
+        "order by id"
     )
-    return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
+    rs = request.db.execute(q, (room_id, ))
+    return [dict(id=row[0], name=row[1], message=row[2], datetime=row[3]) for row in rs.fetchall()]
 
 
 def get_room_last_msg_id(request, room_id):
