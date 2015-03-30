@@ -7,7 +7,13 @@
 <div id="chat">
 % if history:
     % for m in history:
-        <div><span>[${m['datetime']}]</span> <b>${m['name']}:</b> <span>${m['message']}</span></div>
+        % if m['type'] == 'message':
+            <div><span>[${m['datetime']}]</span> <b>${m['name']}:</b> <span>${m['message']}</span></div>
+        % elif m['type'] == 'system':
+            <div><b>${m['message']}</b></div>
+        % elif m['type'] == 'news':
+            <div><i>${m['message']}</i></div>
+        % endif
     % endfor
 % else:
   <div>Chat history is empty.</div>

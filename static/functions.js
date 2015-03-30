@@ -30,7 +30,14 @@ function ping() {
         success: function(result) {
             if (result.message_list.length > 0) {
                 $.each(result.message_list, function(k, v) {
-                    $('#chat').append('<div><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>');
+                    if (v.type == 'message') {
+                        m = '<div><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>'
+                    } else if (v.type == 'system') {
+                        m = '<div><b>'+v.message+'</b></div>'
+                    } else if (v.type == 'news') {
+                        m = ''
+                    }
+                    $('#chat').append(m);
                     document.getElementById('chat').scrollTop = 9999999;
                 });
             }
@@ -55,3 +62,7 @@ $(document).ready(function() {
         $('#message').val('')
     });
 })
+
+$(window).bind('beforeunload', function(e) {
+    //e.preventDefault();
+});

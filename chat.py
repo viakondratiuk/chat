@@ -146,6 +146,9 @@ def room_view(request):
         request.session.flash('Room with id %s doesn\'t exist.' % room_id)
         return HTTPFound(location=request.route_url('room_list'))
 
+    message = '%s joined a room' % request.session['user']['name']
+    add_message(request, request.session['user']['id'], room_id, 'system', message)
+
     request.session['room']['last_id'] = get_room_last_msg_id(request, room_id)
     return {'history': get_room_history(request, room_id)}
 
@@ -163,7 +166,7 @@ def get_room_history(request, room_id):
     q = (
         "select * "
         "from "
-        "(select message.id, user.name, message.message, message.datetime "
+        "(select message.id, user.name, message.type, message.message, message.datetime "
         "from message "
         "inner join user on message.user_id = user.id "
         "where message.room_id = ? order by message.id desc limit 10) "
@@ -171,7 +174,7 @@ def get_room_history(request, room_id):
         "order by id"
     )
     rs = request.db.execute(q, (room_id, ))
-    return [dict(id=row[0], name=row[1], message=row[2], datetime=row[3]) for row in rs.fetchall()]
+    return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
 def get_room_last_msg_id(request, room_id):
@@ -192,14 +195,14 @@ def add_message_view(request):
     if request.method == 'POST' and request.POST.get('message') and request.POST.get('id'):
         message = request.POST.get('message')
         room_id = request.POST.get('id')
-        add_message(request, request.session['user']['id'], room_id, message)
+        add_message(request, request.session['user']['id'], room_id, 'message', message)
 
     return {}
 
 
-def add_message(request, user_id, room_id, message):
+def add_message(request, user_id, room_id, m_type, message):
     request.db.execute(
-        "insert into message (user_id, room_id, message) values (?, ?, ?)", (user_id, room_id, message)
+        "insert into message (user_id, room_id, type, message) values (?, ?, ?, ?)", (user_id, room_id, m_type, message)
     )
     request.db.commit()
 
@@ -215,11 +218,15 @@ def refresh_view(request):
 def get_new_message_list(request):
     room_id = request.session['room']['id']
     last_id = request.session['room']['last_id']
-    rs = request.db.execute(
-        "select user.name, message.message, message.datetime from message inner join user on message.user_id = user.id where message.room_id = ? and message.id > ?", (room_id, last_id)
+    q = (
+        "select message.id, user.name, message.type, message.message, message.datetime "
+        "from message "
+        "inner join user on message.user_id = user.id "
+        "where message.room_id = ? and message.id > ?"
     )
+    rs = request.db.execute(q, (room_id, last_id))
     request.session['room']['last_id'] = get_room_last_msg_id(request, room_id)
-    return [dict(name=row[0], message=row[1], datetime=row[2]) for row in rs.fetchall()]
+    return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
 # subscribers

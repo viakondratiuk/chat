@@ -13,6 +13,7 @@ create table if not exists message (
     id integer primary key autoincrement,
     user_id integer not null,
     room_id integer not null,
+    type text check(type in ('message', 'system', 'news')) not null,
     datetime datetime default (datetime('now', 'localtime')),
     message text not null,
     FOREIGN KEY(room_id) REFERENCES room(id) ON DELETE CASCADE
