@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 <%inherit file="layout.mako"/>
-<a href="/logout">Logout</a>
 <h1>Join Room</h1>
 <div id="join">
 % if rooms:

@@ -30,15 +30,17 @@ function ping() {
         success: function(result) {
             if (result.message_list.length > 0) {
                 $.each(result.message_list, function(k, v) {
-                    if (v.type == 'message') {
-                        m = '<div><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>'
-                    } else if (v.type == 'system') {
-                        m = '<div><b>'+v.message+'</b></div>'
-                    } else if (v.type == 'news') {
-                        m = ''
+                    if ($('#m' + v.id).length == 0) {
+                        if (v.type == 'message') {
+                            m = '<div id="m'+v.id+'"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
+                        } else if (v.type == 'system') {
+                            m = '<div id="m'+v.id+'"><b>'+v.message+'</b></div>';
+                        } else if (v.type == 'news') {
+                            m = '<div id="m'+v.id+'"></div>';
+                        }
+                        $('#chat').append(m);
+                        document.getElementById('chat').scrollTop = 9999999;
                     }
-                    $('#chat').append(m);
-                    document.getElementById('chat').scrollTop = 9999999;
                 });
             }
         }
@@ -62,7 +64,3 @@ $(document).ready(function() {
         $('#message').val('')
     });
 })
-
-$(window).bind('beforeunload', function(e) {
-    //e.preventDefault();
-});

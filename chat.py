@@ -87,7 +87,13 @@ def logout_view(request):
 
 
 def clear_session(request):
-    request.session = dict()
+    add_left_message(request)
+    request.session.invalidate()
+
+
+def add_left_message(request):
+    message = '%s left a room' % request.session['user']['name']
+    add_message(request, request.session['user']['id'], request.session['room']['id'], 'system', message)
 
 '''
 ------ Rooms ------
@@ -99,6 +105,8 @@ def clear_session(request):
 def room_list_view(request):
     if 'user' not in request.session:
         return HTTPFound(location=request.route_url('login'))
+    if 'room' in request.session:
+        add_left_message(request)
 
     return {'rooms': get_room_list(request)}
 
@@ -142,24 +150,34 @@ def room_view(request):
         return HTTPFound(location=request.route_url('login'))
 
     room_id = int(request.matchdict['id'])
-    if not get_room(request, room_id):
+    room = get_room(request, room_id)
+    if not room:
         request.session.flash('Room with id %s doesn\'t exist.' % room_id)
         return HTTPFound(location=request.route_url('room_list'))
 
-    message = '%s joined a room' % request.session['user']['name']
-    add_message(request, request.session['user']['id'], room_id, 'system', message)
-
+    add_joined_message(request, room_id)
+    request.session['room'] = room
     request.session['room']['last_id'] = get_room_last_msg_id(request, room_id)
     return {'history': get_room_history(request, room_id)}
 
 
 def get_room(request, room_id):
     rs = request.db.execute("select * from room where id = ?", (room_id, )).fetchone()
-    if rs is not None:
-        request.session['room'] = dict(id=rs[0], name=rs[1])
-        return True
+    return dict(id=rs[0], name=rs[1]) if rs is not None else None
 
-    return None
+
+def add_joined_message(request, room_id):
+    if 'room' not in request.session or request.session['room']['id'] != room_id:
+        message = '%s joined a room' % request.session['user']['name']
+        add_message(request, request.session['user']['id'], room_id, 'system', message)
+
+
+def get_room_last_msg_id(request, room_id):
+    rs = request.db.execute(
+        "select id from message where room_id = ? order by id desc limit 1;", (room_id, )
+    ).fetchone()
+
+    return rs[0] if rs is not None else None
 
 
 def get_room_history(request, room_id):
@@ -175,14 +193,6 @@ def get_room_history(request, room_id):
     )
     rs = request.db.execute(q, (room_id, ))
     return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
-
-
-def get_room_last_msg_id(request, room_id):
-    rs = request.db.execute(
-        "select id from message where room_id = ? order by id desc limit 1;", (room_id, )
-    ).fetchone()
-
-    return rs[0] if rs is not None else None
 
 
 # Add message
