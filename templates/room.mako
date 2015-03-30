@@ -35,3 +35,16 @@
     </div>
 </form>
 
+<div class="center">
+    <a class="toggle" href="#" onclick="toggleVisibility('commands'); return false;" title="Available commands">Available commands</a>
+</div>
+<div id="commands" style="display: none">
+    <ul>
+        <li>/search search terms</li>
+        <li>/sum 1 2 3 4 5</li>
+        <li>/product 1 2 3 4 5</li>
+        <li>/mean 1 2 3 4 5 6</li>
+    </ul>
+</div>
+
+

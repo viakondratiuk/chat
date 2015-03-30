@@ -24,24 +24,28 @@ function toggleVisibility(id) {
     }
 }
 
+function addChatMessage(list) {
+    $.each(list, function(k, v) {
+        if ($('#m' + v.id).length == 0) {
+            if (v.type == 'message' or v.type == 'system') {
+                m = '<div id="m'+v.id+'"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
+            } else if (v.type == 'system') {
+                m = '<div id="m'+v.id+'"><b>'+v.message+'</b></div>';
+            } else if (v.type == 'news') {
+                m = '<div id="m'+v.id+'"></div>';
+            }
+            $('#chat').append(m);
+            document.getElementById('chat').scrollTop = 9999999;
+        }
+    });
+}
+
 function ping() {
     $.ajax({
         url: '/refresh',
-        success: function(result) {
-            if (result.message_list.length > 0) {
-                $.each(result.message_list, function(k, v) {
-                    if ($('#m' + v.id).length == 0) {
-                        if (v.type == 'message') {
-                            m = '<div id="m'+v.id+'"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
-                        } else if (v.type == 'system') {
-                            m = '<div id="m'+v.id+'"><b>'+v.message+'</b></div>';
-                        } else if (v.type == 'news') {
-                            m = '<div id="m'+v.id+'"></div>';
-                        }
-                        $('#chat').append(m);
-                        document.getElementById('chat').scrollTop = 9999999;
-                    }
-                });
+        success: function(r) {
+            if (r.message_list.length > 0) {
+                addChatMessage(r.message_list)
             }
         }
     });
@@ -57,9 +61,15 @@ $(document).ready(function() {
         form = $(this);
         e.preventDefault();
         $.ajax({
-            type: 'POST',
+            type: 'post',
             url: form.attr('action'),
-            data: form.serialize()
+            data: form.serialize(),
+            success: function (r) {
+                if (r.exec) {
+                    //$('#chat').append('<div><b>'+r.exec+'</b></div>');
+                    addChatMessage(r.exec);
+                }
+            }
         });
         $('#message').val('')
     });

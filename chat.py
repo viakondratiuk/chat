@@ -195,9 +195,10 @@ def get_room_history(request, room_id):
     return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
+commands = ['/search', '/sum', '/product', '/mean']
 # Add message
 # TODO: How to remove renderer?
-@view_config(route_name='add_message', renderer='add_message.mako')
+@view_config(route_name='add_message', renderer='json')
 def add_message_view(request):
     if 'user' not in request.session:
         return HTTPFound(location=request.route_url('login'))
@@ -205,7 +206,10 @@ def add_message_view(request):
     if request.method == 'POST' and request.POST.get('message') and request.POST.get('id'):
         message = request.POST.get('message')
         room_id = request.POST.get('id')
-        add_message(request, request.session['user']['id'], room_id, 'message', message)
+        if message.split(' ')[0] in commands:
+            return {'exec': execute_command(request, message)}
+        else:
+            add_message(request, request.session['user']['id'], room_id, 'message', message)
 
     return {}
 
@@ -215,6 +219,31 @@ def add_message(request, user_id, room_id, m_type, message):
         "insert into message (user_id, room_id, type, message) values (?, ?, ?, ?)", (user_id, room_id, m_type, message)
     )
     request.db.commit()
+
+
+def execute_command(request, message):
+    spl = message.split(' ')
+    if spl[0] == '/search':
+        return find_message(request, spl[1:])
+    elif spl[0] == '/sum':
+        res = sum(map(int, spl[1:]))
+    elif spl[0] == '/product':
+        res = reduce(lambda x, y: x * y, map(int, spl[1:]), 1)
+    elif spl[0] == '/mean':
+        res = sum(map(int, spl[1:]))/float(len(spl[1:]))
+    return 'Result of %s (%s): %s' % (spl[0], ', '.join(spl[1:]), res)
+
+def find_message(request, message):
+    rs = request.db.execute(
+        "select * from "
+        "(select message.id,  user.name, 'search', message, datetime "
+        "from message "
+        "inner join user on message.user_id = user.id "
+        "where message like ? and room_id = ?"
+        "order by message.id desc limit 5) "
+        "as t order by id", ('%'+' '.join(message)+'%', 2)
+    )
+    return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
 @view_config(route_name='refresh', renderer='json')
