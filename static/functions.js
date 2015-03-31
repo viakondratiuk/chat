@@ -72,12 +72,11 @@ $(document).ready(function() {
             return clearChat();
         }
 
-        form = $(this);
         e.preventDefault();
         $.ajax({
             type: 'post',
-            url: form.attr('action'),
-            data: form.serialize(),
+            url:  $(this).attr('action'),
+            data:  $(this).serialize(),
             success: function (r) {
                 addChatMessage(r);
             }

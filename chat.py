@@ -86,14 +86,11 @@ def logout_view(request):
     return HTTPFound(location=request.route_url('login'))
 
 
+# Clear user session
 def clear_session(request):
     add_left_message(request)
     request.session.invalidate()
 
-
-def add_left_message(request):
-    message = '%s left a room' % request.session['user']['name']
-    add_message(request, request.session['user']['id'], request.session['room']['id'], 'system', message)
 
 '''
 ------ Rooms ------
@@ -109,6 +106,14 @@ def room_list_view(request):
         add_left_message(request)
 
     return {'rooms': get_room_list(request)}
+
+
+# Add left message of chat member
+def add_left_message(request):
+    message = '%s left a room' % request.session['user']['name']
+    add_message(request, request.session['user']['id'], request.session['room']['id'], 'system', message)
+    del request.session['room']
+
 
 # Get all available rooms
 def get_room_list(request):
