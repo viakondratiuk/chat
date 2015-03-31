@@ -284,6 +284,12 @@ def get_new_message_list(request):
     return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
+@view_config(context='pyramid.exceptions.NotFound', renderer='notfound.mako')
+def notfound_view(request):
+    request.response.status = '404 Not Found'
+    return {}
+
+
 # subscribers
 @subscriber(NewRequest)
 def new_request_subscriber(event):
