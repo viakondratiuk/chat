@@ -116,3 +116,7 @@ table.info td {
     margin: 0;
     float: right;
 }
+
+.search {
+    background-color: #FFFFD8;
+}

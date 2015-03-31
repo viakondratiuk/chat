@@ -24,31 +24,41 @@ function toggleVisibility(id) {
     }
 }
 
-function addChatMessage(list) {
-    $.each(list, function(k, v) {
-        if ($('#m' + v.id).length == 0) {
-            if (v.type == 'message' or v.type == 'system') {
-                m = '<div id="m'+v.id+'"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
-            } else if (v.type == 'system') {
-                m = '<div id="m'+v.id+'"><b>'+v.message+'</b></div>';
-            } else if (v.type == 'news') {
-                m = '<div id="m'+v.id+'"></div>';
+function addChatMessage(r) {
+    if (r.messages) {
+        $.each(r.messages, function(k, v) {
+            if ($('#m' + v.id).length == 0) {
+                if (v.type == 'message') {
+                    m = '<div id="m'+v.id+'"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
+                } else if (v.type == 'system') {
+                    m = '<div id="m'+v.id+'"><b>'+v.message+'</b></div>';
+                } else if (v.type == 'news') {
+                    m = '<div id="m'+v.id+'"></div>';
+                } else if (v.type == 'command') {
+                    m = '<div class="command"><b>'+v.name+':</b> <span>'+v.message+'</span></div>';
+                } else if (v.type = 'search') {
+                    m = '<div class="search"><span>['+v.datetime+']</span> <b>'+v.name+':</b> <span>'+v.message+'</span></div>';
+                }
+                $('#chat').append(m);
+                document.getElementById('chat').scrollTop = 9999999;
             }
-            $('#chat').append(m);
-            document.getElementById('chat').scrollTop = 9999999;
-        }
-    });
+        });
+    }
 }
 
 function ping() {
     $.ajax({
         url: '/refresh',
         success: function(r) {
-            if (r.message_list.length > 0) {
-                addChatMessage(r.message_list)
-            }
+            addChatMessage(r)
         }
     });
+}
+
+function clearChat() {
+    $('#chat').html('');
+    $('#message').val('')
+    return false;
 }
 
 $(document).ready(function() {
@@ -57,7 +67,11 @@ $(document).ready(function() {
         setInterval(ping, 1000);
     }
 
-    $('#add_message').submit(function(e) {
+    $('#process_message').submit(function(e) {
+        if ($('#message').val() == '/clear') {
+            return clearChat();
+        }
+
         form = $(this);
         e.preventDefault();
         $.ajax({
@@ -65,10 +79,7 @@ $(document).ready(function() {
             url: form.attr('action'),
             data: form.serialize(),
             success: function (r) {
-                if (r.exec) {
-                    //$('#chat').append('<div><b>'+r.exec+'</b></div>');
-                    addChatMessage(r.exec);
-                }
+                addChatMessage(r);
             }
         });
         $('#message').val('')

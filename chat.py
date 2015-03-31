@@ -110,7 +110,7 @@ def room_list_view(request):
 
     return {'rooms': get_room_list(request)}
 
-
+# Get all available rooms
 def get_room_list(request):
     rs = request.db.execute("select id, name from room order by id desc")
     return [dict(room_id=row[0], name=row[1]) for row in rs.fetchall()]
@@ -180,6 +180,7 @@ def get_room_last_msg_id(request, room_id):
     return rs[0] if rs is not None else None
 
 
+# Take last 10 messages from room history
 def get_room_history(request, room_id):
     q = (
         "select * "
@@ -195,25 +196,26 @@ def get_room_history(request, room_id):
     return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
-commands = ['/search', '/sum', '/product', '/mean']
-# Add message
-# TODO: How to remove renderer?
-@view_config(route_name='add_message', renderer='json')
-def add_message_view(request):
+# Process user message
+chat_commands = ['/search', '/sum', '/product', '/mean']
+@view_config(route_name='process_message', renderer='json')
+def process_message_view(request):
     if 'user' not in request.session:
         return HTTPFound(location=request.route_url('login'))
 
     if request.method == 'POST' and request.POST.get('message') and request.POST.get('id'):
         message = request.POST.get('message')
         room_id = request.POST.get('id')
-        if message.split(' ')[0] in commands:
-            return {'exec': execute_command(request, message)}
+        message = ' '.join(message.split())
+        if message.split(' ')[0] in chat_commands:
+            return {'messages': execute_command(request, message, room_id)}
         else:
             add_message(request, request.session['user']['id'], room_id, 'message', message)
 
     return {}
 
 
+# Add message with specified type into db
 def add_message(request, user_id, room_id, m_type, message):
     request.db.execute(
         "insert into message (user_id, room_id, type, message) values (?, ?, ?, ?)", (user_id, room_id, m_type, message)
@@ -221,39 +223,48 @@ def add_message(request, user_id, room_id, m_type, message):
     request.db.commit()
 
 
-def execute_command(request, message):
+# Executes one of the commands from chat_commands list
+def execute_command(request, message, room_id):
     spl = message.split(' ')
+    name = 'Result of %s (%s)' % (spl[0], ', '.join(spl[1:]))
     if spl[0] == '/search':
-        return find_message(request, spl[1:])
+        res = [dict(name=name, type='command', message='')]
+        res.extend(find_message(request, spl[1:], room_id))
+        return res
     elif spl[0] == '/sum':
-        res = sum(map(int, spl[1:]))
+        res = sum(int(y) for y in spl[1:] if y.isdigit())
     elif spl[0] == '/product':
-        res = reduce(lambda x, y: x * y, map(int, spl[1:]), 1)
+        res = reduce(lambda x, y: x * int(y) if y.isdigit() else 1, spl[1:], 1)
     elif spl[0] == '/mean':
-        res = sum(map(int, spl[1:]))/float(len(spl[1:]))
-    return 'Result of %s (%s): %s' % (spl[0], ', '.join(spl[1:]), res)
+        res = sum(int(y) for y in spl[1:] if y.isdigit())/float(len(spl[1:]))
 
-def find_message(request, message):
+    return [dict(name=name, type='command', message=res)]
+
+
+# Search for messages in db
+def find_message(request, message, room_id):
     rs = request.db.execute(
         "select * from "
         "(select message.id,  user.name, 'search', message, datetime "
         "from message "
         "inner join user on message.user_id = user.id "
-        "where message like ? and room_id = ?"
+        "where message like ? and room_id = ? and type='message'"
         "order by message.id desc limit 5) "
-        "as t order by id", ('%'+' '.join(message)+'%', 2)
+        "as t order by id", ('%'+' '.join(message)+'%', room_id)
     )
-    return [dict(id=row[0], name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
+    return [dict(name=row[1], type=row[2], message=row[3], datetime=row[4]) for row in rs.fetchall()]
 
 
+# Router which send responses on AJAX calls to refresh chat messages
 @view_config(route_name='refresh', renderer='json')
 def refresh_view(request):
     if 'user' not in request.session:
         return {}
 
-    return {'message_list': get_new_message_list(request)}
+    return {'messages': get_new_message_list(request)}
 
 
+# Collect all new messages from db
 def get_new_message_list(request):
     room_id = request.session['room']['id']
     last_id = request.session['room']['last_id']
@@ -312,7 +323,7 @@ if __name__ == '__main__':
     config.add_route('delete_room', '/delete_room/{id}')
     config.add_route('room', '/room/{id}')
     config.add_route('refresh', '/refresh')
-    config.add_route('add_message', '/add_message')
+    config.add_route('process_message', '/process_message')
     config.add_route('error', '/error')
     # static view setup
     config.add_static_view('static', os.path.join(here, 'static'))

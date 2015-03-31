@@ -8,9 +8,9 @@
 % if history:
     % for m in history:
         % if m['type'] == 'message':
-            <div><span>[${m['datetime']}]</span> <b>${m['name']}:</b> <span>${m['message']}</span></div>
+            <div id="m${m['id']}"><span>[${m['datetime']}]</span> <b>${m['name']}:</b> <span>${m['message']}</span></div>
         % elif m['type'] == 'system':
-            <div><b>${m['message']}</b></div>
+            <div id="m${m['id']}"><b>${m['message']}</b></div>
         % elif m['type'] == 'news':
             <div><i>${m['message']}</i></div>
         % endif
@@ -20,7 +20,7 @@
 % endif
 </div>
 
-<form id="add_message" class="inline" action="${request.route_url('add_message')}" method="post">
+<form class="inline" id="process_message" action="${request.route_url('process_message')}" method="post">
     <input type="hidden" name="id" value="${request.session['room']['id']}"/>
     <div class="field_container">
         <div class="label">
@@ -40,10 +40,11 @@
 </div>
 <div id="commands" style="display: none">
     <ul>
-        <li>/search search terms</li>
-        <li>/sum 1 2 3 4 5</li>
-        <li>/product 1 2 3 4 5</li>
-        <li>/mean 1 2 3 4 5 6</li>
+        <li>/clear - clears chat window</li>
+        <li>/search search terms - search for search string, can be delimited by spaces</li>
+        <li>/sum 1 2 3 4 5 - finds sum of elements delimited by spaces</li>
+        <li>/product 1 2 3 4 5 - finds product of elements delimited by spaces</li>
+        <li>/mean 1 2 3 4 5 6 - finds mean of elements delimited by spaces</li>
     </ul>
 </div>
 
